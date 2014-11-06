@@ -1,0 +1,22 @@
+{
+    "name": "emonkak/pimple-helper",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Shota Nozaki",
+            "email": "emonkak@gmail.com"
+        }
+    ],
+    "require": {
+        "pimple/pimple": "~3.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "PimpleHelper\\": "src/",
+            "PimpleHelperTests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~3.7"
+    }
+}
