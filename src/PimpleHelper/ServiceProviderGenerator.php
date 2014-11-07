@@ -125,7 +125,7 @@ EOL;
             }
 
             $queue = $nextQueue;
-        } while (count($queue = $nextQueue));
+        } while (count($queue));
 
         return $definitions;
     }
