@@ -55,7 +55,8 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
 
 class Bootstrapper
 {
-    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2, $qux) {
+    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2, $qux)
+    {
         $this->foo = $foo;
         $this->bar = $bar;
         $this->baz1 = $baz1;
