@@ -1,4 +1,7 @@
-# Pimple Service Provider Generator [![Build Status](https://travis-ci.org/emonkak/pimple-service-provider-generator.png)](https://travis-ci.org/emonkak/pimple-service-provider-generator)
+# Pimple Service Provider Generator
+
+[![Build Status](https://travis-ci.org/emonkak/pimple-service-provider-generator.png)](https://travis-ci.org/emonkak/pimple-service-provider-generator)
+[![Coverage Status](https://coveralls.io/repos/emonkak/pimple-service-provider-generator/badge.png)](https://coveralls.io/r/emonkak/pimple-service-provider-generator)
 
 ## Example
 

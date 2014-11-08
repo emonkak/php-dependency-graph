@@ -13,9 +13,14 @@ class ServiceProviderGenerator
     private $serviceProviderDumper;
 
     /**
-     * @var array of \ReflectionClass
+     * @var \SplObjectStorage of \ReflectionClass
      */
-    private $bindings = [];
+    private $bindings;
+
+    /**
+     * @var array of boolean
+     */
+    private $types = [];
 
     /**
      * @var array of boolean
@@ -28,6 +33,7 @@ class ServiceProviderGenerator
     public function __construct(AbstractServiceProviderDumper $serviceProviderDumper)
     {
         $this->serviceProviderDumper = $serviceProviderDumper;
+        $this->bindings = new \SplObjectStorage();
     }
 
     /**
@@ -35,7 +41,9 @@ class ServiceProviderGenerator
      */
     public function registerClass($className)
     {
-        $this->bindings[$className] = new \ReflectionClass($className);
+        $class = new \ReflectionClass($className);
+        $this->bindings[$class] = $class;
+        $this->types[$class] = true;
     }
 
     /**
@@ -43,7 +51,10 @@ class ServiceProviderGenerator
      */
     public function registerType($typeName, $className)
     {
-        $this->bindings[$typeName] = new \ReflectionClass($className);
+        $type = new \ReflectionClass($typeName);
+        $class = new \ReflectionClass($className);
+        $this->bindings[$type] = $class;
+        $this->types[$class] = true;
     }
 
     /**
