@@ -3,10 +3,15 @@
 namespace PimpleHelper;
 
 /**
- * Service provider's source generator implementation.
+ * Resolves dependencies to generate the service provider's source.
  */
-class ServiceProviderGenerator implements ServiceProviderGeneratorInterface
+class ServiceProviderGenerator
 {
+    /**
+     * @var AbstractServiceProviderDumper $serviceProviderDumper
+     */
+    private $serviceProviderDumper;
+
     /**
      * @var array of \ReflectionClass
      */
@@ -16,6 +21,14 @@ class ServiceProviderGenerator implements ServiceProviderGeneratorInterface
      * @var array of boolean
      */
     private $dynamicTypes = [];
+
+    /**
+     * @param AbstractServiceProviderDumper $serviceProviderDumper
+     */
+    public function __construct(AbstractServiceProviderDumper $serviceProviderDumper)
+    {
+        $this->serviceProviderDumper = $serviceProviderDumper;
+    }
 
     /**
      * {@inheritDoc}
@@ -46,36 +59,14 @@ class ServiceProviderGenerator implements ServiceProviderGeneratorInterface
      */
     public function generate($className)
     {
-        $definitions = $this->dumpDefnitions();
-        $joinedDefinitions = implode("\n", $definitions);
-
-        $lastSeparatorPos = strrpos($className, '\\');
-        if ($lastSeparatorPos !== false) {
-            $namespace = substr($className, 0, $lastSeparatorPos);
-            $shortClassName = substr($className, $lastSeparatorPos + 1);
-            $namespaceSource = "namespace $namespace;\n\n";
-        } else {
-            $shortClassName = $className;
-            $namespaceSource = '';
-        }
-
-        $classSource = <<<EOL
-class $shortClassName implements \Pimple\ServiceProviderInterface
-{
-    public function register(\Pimple\Container \$c)
-    {
-$joinedDefinitions
-    }
-}
-EOL;
-
-        return $namespaceSource . $classSource;
+        $services = $this->resolveServices();
+        return $this->serviceProviderDumper->dumpClass($className, $services);
     }
 
     /**
-     * @return array of string
+     * @return array of Service
      */
-    private function dumpDefnitions()
+    private function resolveServices()
     {
         $queue = $this->bindings;
         $definitions = [];
@@ -88,40 +79,34 @@ EOL;
                 $constructor = $class->getConstructor();
 
                 if ($constructor) {
-                    $params = $constructor->getParameters();
-
-                    foreach ($params as $param) {
+                    foreach ($constructor->getParameters() as $param) {
                         $paramClass = $param->getClass();
 
                         if ($paramClass) {
                             $paramClassName = $paramClass->getName();
 
                             if (isset($this->dynamicTypes[$paramClassName])) {
-                                // Type and name-based binding
-                                $paramName = $param->getName();
-                                $paramDefinitions[] = "\$c['$paramName@$paramClassName']";
+                                $paramDefinitions[] = new NamedParam($param, $paramClass);
                             } else {
                                 // Binding from a type
                                 if (!isset($queue[$paramClassName])
                                     && !isset($definitions[$paramClassName])) {
                                     $nextQueue[$paramClassName] = $paramClass;
                                 }
-                                $paramDefinitions[] = "\$c['$paramClassName']";
+                                $paramDefinitions[] = new TypedParam($param, $paramClass);
                             }
                         } else {
                             // Name-based binding
-                            $paramName = $param->getName();
-                            $paramDefinitions[] = "\$c['$paramName@']";
+                            $paramDefinitions[] = new NameOnlyParam($param);
                         }
                     }
                 }
 
-                $className = $class->getName();
-                $joinedParamDefinitions = implode(', ', $paramDefinitions);
-
-                $definitions[$typeName] = <<<EOL
-        \$c['$typeName'] = function(\$c) { return new \\$className($joinedParamDefinitions); };
-EOL;
+                $definitions[$typeName] = new Service(
+                    new \ReflectionClass($typeName),
+                    $class,
+                    $paramDefinitions
+                );
             }
 
             $queue = $nextQueue;

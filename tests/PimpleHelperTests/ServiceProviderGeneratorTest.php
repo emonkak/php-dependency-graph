@@ -3,6 +3,7 @@
 namespace PimpleHelperTests;
 
 use PimpleHelper\ServiceProviderGenerator;
+use PimpleHelper\ServiceProviderDumper;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
@@ -10,7 +11,7 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
 {
     public function testGenerate()
     {
-        $generator = new ServiceProviderGenerator();
+        $generator = new ServiceProviderGenerator(new ServiceProviderDumper());
         $generator->registerClass(Bootstrapper::class);
         $generator->registerType(IFoo::class, Foo::class);
         $generator->registerType(IBar::class, Bar::class);
