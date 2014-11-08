@@ -37,28 +37,51 @@ class ServiceProviderGenerator
     }
 
     /**
-     * {@inheritDoc}
+     * Registers the class to resolve the dependent.
+     *
+     * @param string The fully qualified class name.
      */
     public function registerClass($className)
     {
+        if (isset($this->types[$className])) {
+            throw new \InvalidArgumentException("`$typeName` is already registerd.");
+        }
+
         $class = new \ReflectionClass($className);
+        if (!$class->isInstantiable()) {
+            throw new \InvalidArgumentException("`$className` is not instantiable.");
+        }
+
         $this->bindings[$class] = $class;
-        $this->types[$class] = true;
+        $this->types[$className] = true;
     }
 
     /**
-     * {@inheritDoc}
+     * Registers the type and class to resolve the dependent.
+     *
+     * @param string $typeName The fully qualified class name.
+     * @param string $className The fully qualified class name.
      */
     public function registerType($typeName, $className)
     {
+        if (isset($this->types[$typeName])) {
+            throw new \InvalidArgumentException("`$typeName` is already registerd.");
+        }
+
         $type = new \ReflectionClass($typeName);
         $class = new \ReflectionClass($className);
+        if (!$class->isInstantiable()) {
+            throw new \InvalidArgumentException("`$className` is not instantiable.");
+        }
+
         $this->bindings[$type] = $class;
-        $this->types[$class] = true;
+        $this->types[$typeName] = true;
     }
 
     /**
-     * {@inheritDoc}
+     * Marks to use name-based binding.
+     *
+     * @param string $typeName The fully qualified class name.
      */
     public function markAsDynamic($typeName)
     {
@@ -66,7 +89,10 @@ class ServiceProviderGenerator
     }
 
     /**
-     * {@inheritDoc}
+     * Generates the ServiceProvider's source.
+     *
+     * @param string $className The fully qualified class name.
+     * @return string source of the class definition.
      */
     public function generate($className)
     {
@@ -80,13 +106,14 @@ class ServiceProviderGenerator
     private function resolveServices()
     {
         $queue = $this->bindings;
-        $definitions = [];
+        $services = [];
 
         do {
-            $nextQueue = [];
+            $nextQueue = new \SplObjectStorage();
 
-            foreach ($queue as $typeName => $class) {
+            foreach ($queue as $type) {
                 $paramDefinitions = [];
+                $class = $queue[$type];
                 $constructor = $class->getConstructor();
 
                 if ($constructor) {
@@ -100,9 +127,9 @@ class ServiceProviderGenerator
                                 $paramDefinitions[] = new NamedParam($param, $paramClass);
                             } else {
                                 // Binding from a type
-                                if (!isset($queue[$paramClassName])
+                                if (!isset($this->types[$paramClassName])
                                     && !isset($definitions[$paramClassName])) {
-                                    $nextQueue[$paramClassName] = $paramClass;
+                                    $nextQueue[$paramClass] = $paramClass;
                                 }
                                 $paramDefinitions[] = new TypedParam($param, $paramClass);
                             }
@@ -113,16 +140,13 @@ class ServiceProviderGenerator
                     }
                 }
 
-                $definitions[$typeName] = new Service(
-                    new \ReflectionClass($typeName),
-                    $class,
-                    $paramDefinitions
-                );
+                $typeName = $type->getName();
+                $services[$typeName] = new Service($type, $class, $paramDefinitions);
             }
 
             $queue = $nextQueue;
         } while (count($queue));
 
-        return $definitions;
+        return $services;
     }
 }
