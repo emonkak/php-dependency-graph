@@ -48,9 +48,6 @@ class ServiceProviderGenerator
         }
 
         $class = new \ReflectionClass($className);
-        if (!$class->isInstantiable()) {
-            throw new \InvalidArgumentException("`$className` is not instantiable.");
-        }
 
         $this->bindings[$class] = $class;
         $this->types[$className] = true;
@@ -70,9 +67,6 @@ class ServiceProviderGenerator
 
         $type = new \ReflectionClass($typeName);
         $class = new \ReflectionClass($className);
-        if (!$class->isInstantiable()) {
-            throw new \InvalidArgumentException("`$className` is not instantiable.");
-        }
 
         $this->bindings[$type] = $class;
         $this->types[$typeName] = true;
@@ -114,8 +108,11 @@ class ServiceProviderGenerator
             foreach ($queue as $type) {
                 $paramDefinitions = [];
                 $class = $queue[$type];
-                $constructor = $class->getConstructor();
+                if (!$class->isInstantiable()) {
+                    throw new \InvalidArgumentException("`{$class->getName()}` is not instantiable.");
+                }
 
+                $constructor = $class->getConstructor();
                 if ($constructor) {
                     foreach ($constructor->getParameters() as $param) {
                         $paramClass = $param->getClass();
@@ -126,7 +123,6 @@ class ServiceProviderGenerator
                             if (isset($this->dynamicTypes[$paramClassName])) {
                                 $paramDefinitions[] = new NamedParam($param, $paramClass);
                             } else {
-                                // Binding from a type
                                 if (!isset($this->types[$paramClassName])
                                     && !isset($definitions[$paramClassName])) {
                                     $nextQueue[$paramClass] = $paramClass;
@@ -134,7 +130,6 @@ class ServiceProviderGenerator
                                 $paramDefinitions[] = new TypedParam($param, $paramClass);
                             }
                         } else {
-                            // Name-based binding
                             $paramDefinitions[] = new NameOnlyParam($param);
                         }
                     }
