@@ -15,7 +15,7 @@
 
   <filter>
     <whitelist>
-      <directory>./src/PimpleDumper/</directory>
+      <directory>./src/DependencyGraph/</directory>
     </whitelist>
   </filter>
 </phpunit>

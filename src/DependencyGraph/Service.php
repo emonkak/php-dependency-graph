@@ -1,6 +1,6 @@
 <?php
 
-namespace PimpleHelper;
+namespace DependencyGraph;
 
 class Service
 {
@@ -15,20 +15,23 @@ class Service
     private $class;
 
     /**
-     * @var array
-     */
-    private $params;
-
-    /**
      * @param \ReflectionClass $type
-     * @param \ReflectionClass $class
-     * @param array $params The constructor parameters
      */
-    public function __construct(\ReflectionClass $type, \ReflectionClass $class, array $params)
+    public function __construct(\ReflectionClass $type, \ReflectionClass $class)
     {
+        if (!$class->isInstantiable()) {
+            throw new \InvalidArgumentException("`{$class->getName()}` is not instantiable.");
+        }
         $this->type = $type;
         $this->class = $class;
-        $this->params = $params;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->type->getName();
     }
 
     /**
@@ -48,10 +51,10 @@ class Service
     }
 
     /**
-     * @return array
+     * @return boolean
      */
-    public function getParams()
+    public function isDynamic()
     {
-        return $this->params;
+        return false;
     }
 }

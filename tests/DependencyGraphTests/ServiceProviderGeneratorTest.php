@@ -1,9 +1,9 @@
 <?php
 
-namespace PimpleHelperTests;
+namespace DependencyGraphTests;
 
-use PimpleHelper\ServiceProviderGenerator;
-use PimpleHelper\ServiceProviderDumper;
+use DependencyGraph\DependencyAnalyzer;
+use DependencyGraph\ServiceProviderGenerator;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
@@ -11,14 +11,17 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
 {
     public function testGenerate()
     {
-        $generator = new ServiceProviderGenerator(new ServiceProviderDumper());
-        $generator->registerClass(Bootstrapper::class);
-        $generator->registerType(IFoo::class, Foo::class);
-        $generator->registerType(IBar::class, Bar::class);
-        $generator->markAsDynamic(IBaz::class);
+        $dependencyAnalyzer = (new DependencyAnalyzer())
+            ->registerClass(new \ReflectionClass(Bootstrapper::class))
+            ->registerType(new \ReflectionClass(IFoo::class), new \ReflectionClass(Foo::class))
+            ->registerType(new \ReflectionClass(IBar::class), new \ReflectionClass(Bar::class))
+            ->markAsDynamic(new \ReflectionClass(IBaz::class));
 
+        $serviceProviderGenerator = new ServiceProviderGenerator();
         $serviceProviderClass = 'MyServiceProvider';
-        $source = $generator->generate($serviceProviderClass);
+        $dependencyGraph = $dependencyAnalyzer->execute();
+
+        $source = $serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
         $this->assertInternalType('string', $source);
 
         eval($source);
@@ -50,19 +53,17 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(IBaz::class, $bootstrapper->baz2);
         $this->assertSame(1, $bootstrapper->baz1->id);
         $this->assertSame(2, $bootstrapper->baz2->id);
-        $this->assertSame('qux', $bootstrapper->qux);
     }
 }
 
 class Bootstrapper
 {
-    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2, $qux)
+    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2)
     {
         $this->foo = $foo;
         $this->bar = $bar;
         $this->baz1 = $baz1;
         $this->baz2 = $baz2;
-        $this->qux = $qux;
     }
 }
 
