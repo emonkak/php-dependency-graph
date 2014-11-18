@@ -46,4 +46,12 @@ class ServiceProviderLoaderOnMemory implements ServiceProviderLoader
     {
         $this->sources[$className] = $source;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function clear()
+    {
+        $this->sources = [];
+    }
 }

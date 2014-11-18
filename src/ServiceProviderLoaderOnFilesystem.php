@@ -71,6 +71,14 @@ class ServiceProviderLoaderOnFilesystem implements ServiceProviderLoader
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function clear()
+    {
+        $this->filesystem->remove($this->dir);
+    }
+
+    /**
      * Converts the class name to the file path.
      *
      * @param string $className

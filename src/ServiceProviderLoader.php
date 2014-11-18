@@ -34,4 +34,11 @@ interface ServiceProviderLoader
      * @throws IOException If the file cannot be written to.
      */
     public function write($className, $source);
+
+    /**
+     * Clears the all sources of the service provider.
+     *
+     * @throws IOException When removal fails
+     */
+    public function clear();
 }
