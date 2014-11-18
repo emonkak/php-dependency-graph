@@ -7,35 +7,12 @@ class DependencyAnalyzer
     /**
      * @var array of Service
      */
-    private $services = [];
-
-    /**
-     * @var array of Service
-     */
     private $bindings = [];
 
     /**
      * @var array of \ReflectionClass
      */
     private $namedTypes = [];
-
-    /**
-     * Registers the class to resolve the dependent.
-     *
-     * @param string $className The fully qualified class name.
-     * @return DependencyAnalyzer
-     */
-    public function registerClass($className)
-    {
-        if (isset($this->services[$className])) {
-            throw new \InvalidArgumentException("`$className` is already registerd.");
-        }
-
-        $class = new \ReflectionClass($className);
-        $this->services[$className] = new Service($class, $class);
-
-        return $this;
-    }
 
     /**
      * Registers the type and class to resolve the dependent.
@@ -94,12 +71,18 @@ class DependencyAnalyzer
     }
 
     /**
+     * @param array $classNames The class names to resolve the dependent.
      * @return DependencyGraph
      */
-    public function execute()
+    public function execute(array $classNames)
     {
-        $services = $this->services;
         $dependencyGraph = new DependencyGraph(function($x) { return (string) $x; });
+        $services = [];
+
+        foreach ($classNames as $className) {
+            $class = new \ReflectionClass($className);
+            $services[] = new Service($class, $class);
+        }
 
         do {
             $nextServices = [];

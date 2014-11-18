@@ -14,12 +14,11 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
         $serviceProviderGenerator = new ServiceProviderGenerator();
         $serviceProviderClass = 'MyServiceProvider';
         $dependencyGraph = (new DependencyAnalyzer())
-            ->registerClass(Bootstrapper::class)
             ->registerType(IFoo::class, Foo::class)
             ->registerType(IBar::class, Bar::class)
             ->registerDynamicType(IQux::class)
             ->markAsNamedType(IBaz::class)
-            ->execute();
+            ->execute([Bootstrapper::class]);
 
         $source = $serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
         $this->assertInternalType('string', $source);
