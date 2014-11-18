@@ -53,12 +53,12 @@ class DependencyAnalyzer
     }
 
     /**
-     * Marks to use dynamic binding.
+     * Registers the type to use dynamic binding.
      *
      * @param string $typeName The fully qualified class name.
      * @return DependencyAnalyzer
      */
-    public function markAsDynamic($typeName)
+    public function registerDynamicType($typeName)
     {
         if (isset($this->bindings[$typeName])) {
             throw new \InvalidArgumentException("`$typeName` is already marked as named type.");
