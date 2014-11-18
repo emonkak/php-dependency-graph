@@ -43,7 +43,7 @@ class DependencyAnalyzer
     public function registerDynamicType($typeName)
     {
         if (isset($this->bindings[$typeName])) {
-            throw new \InvalidArgumentException("`$typeName` is already marked as named type.");
+            throw new \InvalidArgumentException("`$typeName` is already registerd.");
         }
 
         $type = new \ReflectionClass($typeName);
