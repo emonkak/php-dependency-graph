@@ -6,27 +6,22 @@
 ## Generate the dependency graph
 
 ```php
-$dependencyGraph = (new DependencyAnalyzer())
-    ->registerClass(new \ReflectionClass(Bootstrapper::class))
-    ->registerType(new \ReflectionClass(IFoo::class), new \ReflectionClass(Foo::class))
-    ->registerType(new \ReflectionClass(IBar::class), new \ReflectionClass(Bar::class))
-    ->markAsDynamic(new \ReflectionClass(IBaz::class))
-    ->execute();
-
 class Bootstrapper
 {
-    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2)
+    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2, IQux $qux)
     {
         $this->foo = $foo;
         $this->bar = $bar;
         $this->baz1 = $baz1;
         $this->baz2 = $baz2;
+        $this->qux = $qux;
     }
 }
 
 interface IFoo {}
 interface IBar {}
 interface IBaz {}
+interface IQux {}
 
 class Foo implements IFoo
 {
@@ -53,32 +48,71 @@ class Baz implements IBaz
     }
 }
 
+class Qux implements IQux
+{
+}
+
 class Piyo {}
 class Payo {}
 class Poyo {}
+
+$dependencyGraph = (new DependencyAnalyzer())
+    ->registerClass(Bootstrapper::class)
+    ->registerType(IFoo::class, Foo::class)
+    ->registerType(IBar::class, Bar::class)
+    ->markAsNamedType(IBaz::class)
+    ->markAsDynamic(IQux::class)
+    ->execute();
 ```
 
-## Generate the service provider source
+## Generate the Pimple's service provider source
 
 ```php
-(new ServiceProviderGenerator())->generate('MyServiceProvider', $dependencyGraph);
+$serviceProviderGenerator = new ServiceProviderGenerator();
+$source = $serviceProviderGenerator->generate('MyServiceProvider', $dependencyGraph);
+
+// Defines the `Bootstrapper` class
+eval($source);
 ```
 
-It generates the following code.
+It generates the following source.
 
 ```php
 class MyServiceProvider implements \Pimple\ServiceProviderInterface
 {
     public function register(\Pimple\Container $c)
     {
-        $c['Bootstrapper'] = function($c) { return new \Bootstrapper($c['IFoo'], $c['IBar'], $c['baz1@IBaz'], $c['baz2@IBaz']; };
-        $c['IFoo'] = function($c) { return new \Foo($c['Piyo'], $c['Payo']); };
-        $c['IBar'] = function($c) { return new \Bar($c['Poyo']); };
+        $c['Bootstrapper'] = function($c) { return new \Bootstrapper($c['IFoo'], $c['IBar'], $c['baz1@IBaz'], $c['baz2@IBaz'], $c['IQux']); };
+        $c['IFoo'] = function($c) { return new \Foo($c['Piyo'], $c['Payo'], $c['Piyo'], $c['Payo']); };
+        $c['IBar'] = function($c) { return new \Bar($c['Poyo'], $c['Poyo']); };
         $c['Piyo'] = function($c) { return new \Piyo(); };
         $c['Payo'] = function($c) { return new \Payo(); };
         $c['Poyo'] = function($c) { return new \Poyo(); };
     }
 }
+```
+
+## Resolve the 'Bootstrapper' of the previous section
+
+```php
+$container = new \Pimple\Container();
+(new MyServiceProvider())->register($container);
+
+// Sets the dynamic binding
+$container[IQux::class] = function() {
+  return new Qux();
+};
+
+// Sets named types
+$container['baz1@' . IBaz::class] = function() {
+    return new Baz(1);
+};
+$container['baz2@' . IBaz::class] = function() {
+    return new Baz(2);
+};
+
+// Gets `Bootstrapper` instance
+$bootstrapper = $container[Bootstrapper::class];
 ```
 
 ## Display the dependency tree
@@ -89,7 +123,7 @@ foreach (new \RecursiveTreeIterator($dependencyGraph) as $object) {
 }
 ```
 
-It echo the following text.
+It displays the following text.
 
 ```
 \-Bootstrapper
@@ -99,5 +133,6 @@ It echo the following text.
   |-IBar
   | \-Poyo
   |-baz1@IBaz
-  \-baz2@IBaz
+  |-baz2@IBaz
+  \-IQux
 ```

@@ -7,32 +7,27 @@ class DependencyAnalyzer
     /**
      * @var array of Service
      */
-    private $services = [];
+    private $bindings = [];
 
     /**
      * @var array of \ReflectionClass
      */
-    private $bindings = [];
-
-    /**
-     * @var array of boolean
-     */
-    private $dynamicTypes = [];
+    private $namedTypes = [];
 
     /**
      * Registers the class to resolve the dependent.
      *
-     * @param \ReflectionClass $class
+     * @param string $className The fully qualified class name.
      * @return DependencyAnalyzer
      */
-    public function registerClass(\ReflectionClass $class)
+    public function registerClass($className)
     {
-        $className = $class->getName();
-        if (isset($this->services[$className])) {
+        if (isset($this->bindings[$className])) {
             throw new \InvalidArgumentException("`$className` is already registerd.");
         }
 
-        $this->services[$className] = new Service($class, $class);
+        $class = new \ReflectionClass($className);
+        $this->bindings[$className] = new Service($class, $class);
 
         return $this;
     }
@@ -40,18 +35,37 @@ class DependencyAnalyzer
     /**
      * Registers the type and class to resolve the dependent.
      *
-     * @param \ReflectionClass $type
-     * @param \ReflectionClass $class
+     * @param string $typeName The fully qualified class name.
+     * @param string $className The fully qualified class name.
      * @return DependencyAnalyzer
      */
-    public function registerType(\ReflectionClass $type, \ReflectionClass $class)
+    public function registerType($typeName, $className)
     {
-        $typeName = $type->getName();
         if (isset($this->bindings[$typeName])) {
             throw new \InvalidArgumentException("`$typeName` is already registerd.");
         }
 
-        $this->bindings[$typeName] = $class;
+        $type = new \ReflectionClass($typeName);
+        $class = new \ReflectionClass($className);
+        $this->bindings[$typeName] = new Service($type, $class);
+
+        return $this;
+    }
+
+    /**
+     * Marks to use dynamic binding.
+     *
+     * @param string $typeName The fully qualified class name.
+     * @return DependencyAnalyzer
+     */
+    public function markAsDynamic($typeName)
+    {
+        if (isset($this->bindings[$typeName])) {
+            throw new \InvalidArgumentException("`$typeName` is already marked as named type.");
+        }
+
+        $type = new \ReflectionClass($typeName);
+        $this->bindings[$typeName] = new DynamicService($type);
 
         return $this;
     }
@@ -59,17 +73,17 @@ class DependencyAnalyzer
     /**
      * Marks to use name-based binding.
      *
-     * @param \ReflectionClass $type
+     * @param string $typeName The fully qualified class name.
      * @return DependencyAnalyzer
      */
-    public function markAsDynamic(\ReflectionClass $type)
+    public function markAsNamedType($typeName)
     {
-        $typeName = $type->getName();
-        if (isset($this->dynamicTypes[$typeName])) {
-            throw new \InvalidArgumentException("`$typeName` is already marked as dynamic.");
+        if (isset($this->namedTypes[$typeName])) {
+            throw new \InvalidArgumentException("`$typeName` is already marked as named type.");
         }
 
-        $this->dynamicTypes[$typeName] = true;
+        $type = new \ReflectionClass($typeName);
+        $this->namedTypes[$typeName] = $type;
 
         return $this;
     }
@@ -79,38 +93,38 @@ class DependencyAnalyzer
      */
     public function execute()
     {
-        $services = $this->services;
-        $dependencyGraph = new DependencyGraph(
-            function($x) { return (string) $x; },
-            function($x, $y) { return (string) $x === (string) $y; }
-        );
+        $services = $this->bindings;
+        $dependencyGraph = new DependencyGraph(function($x) { return (string) $x; });
 
         do {
             $nextServices = [];
 
             foreach ($services as $service) {
                 $class = $service->getClass();
-                $constructor = $class->getConstructor();
-                if (!$constructor) {
-                    continue;
-                }
-
-                $params = $service->isDynamic() ? [] : $constructor->getParameters();
                 $dependencies = [];
+
+                if ($service->isDynamic()) {
+                    $params = [];
+                } else {
+                    $constructor = $class->getConstructor();
+                    $params = $constructor ? $constructor->getParameters() : [];
+                }
 
                 foreach ($params as $param) {
                     $paramClass = $param->getClass();
                     if (!$paramClass) {
-                        continue;
+                        throw new \InvalidArgumentException(
+                            "The `{$param->getName()}` argument of `{$class->getName()}` is not specified type."
+                        );
                     }
 
                     $paramClassName = $paramClass->getName();
-                    if (isset($this->dynamicTypes[$paramClassName])) {
+                    if (isset($this->namedTypes[$paramClassName])) {
                         $dependency = new NamedService($param->getName(), $paramClass);
-                    } elseif (isset($this->bindings[$paramClassName])) {
-                        $dependency = new Service($paramClass, $this->bindings[$paramClassName]);
                     } else {
-                        $dependency = new Service($paramClass, $paramClass);
+                        $dependency = isset($this->bindings[$paramClassName])
+                            ? $this->bindings[$paramClassName]
+                            : new Service($paramClass, $paramClass);
                     }
 
                     $dependencies[] = $nextServices[] = $dependency;

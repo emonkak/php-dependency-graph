@@ -11,15 +11,15 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
 {
     public function testGenerate()
     {
-        $dependencyAnalyzer = (new DependencyAnalyzer())
-            ->registerClass(new \ReflectionClass(Bootstrapper::class))
-            ->registerType(new \ReflectionClass(IFoo::class), new \ReflectionClass(Foo::class))
-            ->registerType(new \ReflectionClass(IBar::class), new \ReflectionClass(Bar::class))
-            ->markAsDynamic(new \ReflectionClass(IBaz::class));
-
         $serviceProviderGenerator = new ServiceProviderGenerator();
         $serviceProviderClass = 'MyServiceProvider';
-        $dependencyGraph = $dependencyAnalyzer->execute();
+        $dependencyGraph = (new DependencyAnalyzer())
+            ->registerClass(Bootstrapper::class)
+            ->registerType(IFoo::class, Foo::class)
+            ->registerType(IBar::class, Bar::class)
+            ->markAsNamedType(IBaz::class)
+            ->markAsDynamic(IQux::class)
+            ->execute();
 
         $source = $serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
         $this->assertInternalType('string', $source);
@@ -31,26 +31,41 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(ServiceProviderInterface::class, $serviceProviderInstance);
 
         $container = new Container();
+        $serviceProviderInstance->register($container);
+
+        $this->assertTrue(isset($container[Bootstrapper::class]));
+        $this->assertTrue(isset($container[IFoo::class]));
+        $this->assertTrue(isset($container[IBar::class]));
+        $this->assertFalse(isset($container[IBaz::class]));
+        $this->assertFalse(isset($container[IQux::class]));
+        $this->assertFalse(isset($container[Foo::class]));
+        $this->assertFalse(isset($container[Bar::class]));
+        $this->assertFalse(isset($container[Baz::class]));
+        $this->assertFalse(isset($container[Qux::class]));
+        $this->assertTrue(isset($container[Piyo::class]));
+        $this->assertTrue(isset($container[Payo::class]));
+        $this->assertTrue(isset($container[Poyo::class]));
+
+        $container[IQux::class] = function() {
+            return new Qux();
+        };
         $container['baz1@' . IBaz::class] = function() {
             return new Baz(1);
         };
         $container['baz2@' . IBaz::class] = function() {
             return new Baz(2);
         };
-        $container['qux@'] = function() {
-            return 'qux';
-        };
-        $serviceProviderInstance->register($container);
 
         $bootstrapper = $container[Bootstrapper::class];
         $this->assertInstanceOf(Bootstrapper::class, $bootstrapper);
         $this->assertInstanceOf(IFoo::class, $bootstrapper->foo);
-        $this->assertInstanceOf(Piyo::class, $bootstrapper->foo->piyo);
-        $this->assertInstanceOf(Payo::class, $bootstrapper->foo->payo);
         $this->assertInstanceOf(IBar::class, $bootstrapper->bar);
-        $this->assertInstanceOf(Poyo::class, $bootstrapper->bar->poyo);
         $this->assertInstanceOf(IBaz::class, $bootstrapper->baz1);
         $this->assertInstanceOf(IBaz::class, $bootstrapper->baz2);
+        $this->assertInstanceOf(IQux::class, $bootstrapper->qux);
+        $this->assertInstanceOf(Piyo::class, $bootstrapper->foo->piyo);
+        $this->assertInstanceOf(Payo::class, $bootstrapper->foo->payo);
+        $this->assertInstanceOf(Poyo::class, $bootstrapper->bar->poyo);
         $this->assertSame(1, $bootstrapper->baz1->id);
         $this->assertSame(2, $bootstrapper->baz2->id);
     }
@@ -58,18 +73,20 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
 
 class Bootstrapper
 {
-    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2)
+    public function __construct(IFoo $foo, IBar $bar, IBaz $baz1, IBaz $baz2, IQux $qux)
     {
         $this->foo = $foo;
         $this->bar = $bar;
         $this->baz1 = $baz1;
         $this->baz2 = $baz2;
+        $this->qux = $qux;
     }
 }
 
 interface IFoo {}
 interface IBar {}
 interface IBaz {}
+interface IQux {}
 
 class Foo implements IFoo
 {
@@ -93,6 +110,13 @@ class Baz implements IBaz
     public function __construct($id)
     {
         $this->id = $id;
+    }
+}
+
+class Qux implements IQux
+{
+    public function __construct()
+    {
     }
 }
 

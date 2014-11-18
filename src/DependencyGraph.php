@@ -18,18 +18,12 @@ class DependencyGraph implements \IteratorAggregate
     private $keySelector;
 
     /**
-     * @var callable
-     */
-    private $equalityComparer;
-
-    /**
      * @param callable $keySelector
      * @param callable $equalityComparer
      */
-    public function __construct(callable $keySelector, callable $equalityComparer)
+    public function __construct(callable $keySelector)
     {
         $this->keySelector = $keySelector;
-        $this->equalityComparer = $equalityComparer;
     }
 
     /**
@@ -43,11 +37,7 @@ class DependencyGraph implements \IteratorAggregate
         if (isset($this->objects[$key])) {
             $object = $this->objects[$key];
         } else {
-            $object = new DependencyObject(
-                $object,
-                $this->keySelector,
-                $this->equalityComparer
-            );
+            $object = new DependencyObject($key, $object);
             $this->objects[$key] = $object;
         }
 
@@ -56,14 +46,10 @@ class DependencyGraph implements \IteratorAggregate
             if (isset($this->objects[$depKey])) {
                 $depObject = $this->objects[$depKey];
             } else {
-                $depObject = $this->objects[$depKey] = new DependencyObject(
-                    $dependency,
-                    $this->keySelector,
-                    $this->equalityComparer
-                );
+                $depObject = $this->objects[$depKey] = new DependencyObject($depKey, $dependency);
             }
 
-            if ($object->isDependedBy($dependency)) {
+            if ($object->isDependedBy($depObject)) {
                 throw new \InvalidArgumentException(sprintf(
                     'Circular dependency detected between `%s` and `%s`',
                     call_user_func($this->keySelector, $depObject),

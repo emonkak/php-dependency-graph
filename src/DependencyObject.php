@@ -10,49 +10,28 @@ class DependencyObject
     private $value;
 
     /**
-     * @var callable
+     * @var array of DependencyObject
      */
-    private $keySelector;
-
-    /**
-     * @var callable
-     */
-    private $equalityComparer;
+    private $dependencies = [];
 
     /**
      * @var array of DependencyObject
      */
-    private $dependencies;
+    private $precedencies = [];
 
     /**
-     * @var array of DependencyObject
+     * @param string $key
+     * @param string $value
      */
-    private $precedencies;
-
-    /**
-     * @param \ReflectionClass $class
-     * @param callable $keySelector
-     * @param callable $equalityComparer
-     * @param array $dependencies
-     * @param array $precedencies
-     */
-    public function __construct(
-        $value,
-        callable $keySelector,
-        callable $equalityComparer,
-        array $dependencies = [],
-        array $precedencies = []
-    ) {
+    public function __construct($key, $value)
+    {
+        $this->key = $key;
         $this->value = $value;
-        $this->keySelector = $keySelector;
-        $this->equalityComparer = $equalityComparer;
-        $this->dependencies = $dependencies;
-        $this->precedencies = $precedencies;
     }
 
     public function __toString()
     {
-        return call_user_func($this->keySelector, $this->value);
+        return $this->key;
     }
 
     /**
@@ -60,7 +39,7 @@ class DependencyObject
      */
     public function addDependency(DependencyObject $object)
     {
-        $this->dependencies[] = $object;
+        $this->dependencies[$object->getKey()] = $object;
     }
 
     /**
@@ -68,7 +47,15 @@ class DependencyObject
      */
     public function addPrecedency(DependencyObject $object)
     {
-        $this->precedencies[] = $object;
+        $this->precedencies[$object->getKey()] = $object;
+    }
+
+    /**
+     * @return string
+     */
+    public function getKey()
+    {
+        return $this->key;
     }
 
     /**
@@ -96,10 +83,10 @@ class DependencyObject
     }
 
     /**
-     * @param mixed $other
+     * @param DependencyObject $other
      * @return boolean
      */
-    public function dependsTo($other)
+    public function dependsTo(DependencyObject $other)
     {
         foreach ($this->dependencies as $object) {
             if ($object->dependsToImpl($other)) {
@@ -110,7 +97,7 @@ class DependencyObject
         return false;
     }
 
-    private function dependsToImpl($other)
+    private function dependsToImpl(DependencyObject $other)
     {
         foreach ($this->dependencies as $object) {
             if ($object->dependsToImpl($other)) {
@@ -118,14 +105,22 @@ class DependencyObject
             }
         }
 
-        return call_user_func($this->equalityComparer, $this->value, $other);
+        return $this->equalsTo($other);
     }
 
     /**
-     * @param string $identifier
      * @return boolean
      */
-    public function isDependedBy($other)
+    public function equalsTo(DependencyObject $other)
+    {
+        return $this === $other || $this->key === $other->key;
+    }
+
+    /**
+     * @param DependencyObject $other
+     * @return boolean
+     */
+    public function isDependedBy(DependencyObject $other)
     {
         foreach ($this->precedencies as $object) {
             if ($object->isDependedByImpl($other)) {
@@ -136,7 +131,7 @@ class DependencyObject
         return false;
     }
 
-    private function isDependedByImpl($other)
+    private function isDependedByImpl(DependencyObject $other)
     {
         foreach ($this->precedencies as $object) {
             if ($object->isDependedByImpl($other)) {
@@ -144,6 +139,6 @@ class DependencyObject
             }
         }
 
-        return call_user_func($this->equalityComparer, $this->value, $other);
+        return $this->equalsTo($other);
     }
 }
