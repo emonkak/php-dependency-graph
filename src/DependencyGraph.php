@@ -19,7 +19,6 @@ class DependencyGraph implements \IteratorAggregate
 
     /**
      * @param callable $keySelector
-     * @param callable $equalityComparer
      */
     public function __construct(callable $keySelector)
     {

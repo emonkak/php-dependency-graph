@@ -10,6 +10,11 @@ class DependencyObject
     private $value;
 
     /**
+     * @var string
+     */
+    private $key;
+
+    /**
      * @var array of DependencyObject
      */
     private $dependencies = [];
