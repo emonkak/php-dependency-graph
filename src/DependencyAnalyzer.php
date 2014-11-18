@@ -7,6 +7,11 @@ class DependencyAnalyzer
     /**
      * @var array of Service
      */
+    private $services = [];
+
+    /**
+     * @var array of Service
+     */
     private $bindings = [];
 
     /**
@@ -22,12 +27,12 @@ class DependencyAnalyzer
      */
     public function registerClass($className)
     {
-        if (isset($this->bindings[$className])) {
+        if (isset($this->services[$className])) {
             throw new \InvalidArgumentException("`$className` is already registerd.");
         }
 
         $class = new \ReflectionClass($className);
-        $this->bindings[$className] = new Service($class, $class);
+        $this->services[$className] = new Service($class, $class);
 
         return $this;
     }
@@ -93,7 +98,7 @@ class DependencyAnalyzer
      */
     public function execute()
     {
-        $services = $this->bindings;
+        $services = $this->services;
         $dependencyGraph = new DependencyGraph(function($x) { return (string) $x; });
 
         do {
