@@ -15,6 +15,11 @@ class DependencyAnalyzer
     private $namedTypes = [];
 
     /**
+     * @var array
+     */
+    private $namedValues = [];
+
+    /**
      * Registers the type and class to resolve the dependent.
      *
      * @param string $typeName The fully qualified class name.
@@ -71,6 +76,23 @@ class DependencyAnalyzer
     }
 
     /**
+     * Marks to use name-based binding.
+     *
+     * @param string $valueName The name of constructor's parameter
+     * @return DependencyAnalyzer
+     */
+    public function markAsNamedValue($valueName)
+    {
+        if (isset($this->namedValues[$valueName])) {
+            throw new \InvalidArgumentException("`$valueName` is already marked as named value.");
+        }
+
+        $this->namedValues[$valueName] = true;
+
+        return $this;
+    }
+
+    /**
      * @param array $classNames The class names to resolve the dependent.
      * @return DependencyGraph
      */
@@ -88,31 +110,39 @@ class DependencyAnalyzer
             $nextServices = [];
 
             foreach ($services as $service) {
-                $class = $service->getClass();
                 $dependencies = [];
 
                 if ($service->isDynamic()) {
                     $params = [];
                 } else {
+                    $class = $service->getClass();
                     $constructor = $class->getConstructor();
                     $params = $constructor ? $constructor->getParameters() : [];
                 }
 
                 foreach ($params as $param) {
                     $paramClass = $param->getClass();
-                    if (!$paramClass) {
-                        throw new \InvalidArgumentException(
-                            "The `{$param->getName()}` argument of `{$class->getName()}` is not specified type."
-                        );
-                    }
 
-                    $paramClassName = $paramClass->getName();
-                    if (isset($this->namedTypes[$paramClassName])) {
-                        $dependency = new NamedService($param->getName(), $paramClass);
+                    if ($paramClass) {
+                        $paramClassName = $paramClass->getName();
+
+                        if (isset($this->namedTypes[$paramClassName])) {
+                            $dependency = new NamedService($param);
+                        } else {
+                            $dependency = isset($this->bindings[$paramClassName])
+                                ? $this->bindings[$paramClassName]
+                                : new Service($paramClass, $paramClass);
+                        }
                     } else {
-                        $dependency = isset($this->bindings[$paramClassName])
-                            ? $this->bindings[$paramClassName]
-                            : new Service($paramClass, $paramClass);
+                        $paramName = $param->getName();
+
+                        if (isset($this->namedValues[$paramName])) {
+                            $dependency = new NamedService($param);
+                        } else {
+                            throw new \UnexpectedValueException(
+                                "The `{$param->getName()}` dependent of `{$class->getName()}` can not be resolved."
+                            );
+                        }
                     }
 
                     $dependencies[] = $nextServices[] = $dependency;

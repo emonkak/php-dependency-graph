@@ -5,23 +5,16 @@ namespace DependencyGraph;
 class NamedService
 {
     /**
-     * @var string
+     * @var \ReflectionParameter
      */
-    private $alias;
+    private $param;
 
     /**
-     * @var \ReflectionClass $type
+     * @param \ReflectionParameter $type
      */
-    private $class;
-
-    /**
-     * @param string $alias
-     * @param \ReflectionClass $type
-     */
-    public function __construct($alias, \ReflectionClass $class)
+    public function __construct(\ReflectionParameter $param)
     {
-        $this->alias = $alias;
-        $this->class = $class;
+        $this->param = $param;
     }
 
     /**
@@ -29,7 +22,9 @@ class NamedService
      */
     public function __toString()
     {
-        return "{$this->alias}@{$this->class->getName()}";
+        $name = $this->param->getName();
+        $class = $this->param->getClass();
+        return $class ? "{$name}@{$class->getName()}" : "{$name}@var";
     }
 
     /**
@@ -37,7 +32,7 @@ class NamedService
      */
     public function getType()
     {
-        return $this->class;
+        return $this->param->getClass();
     }
 
     /**
@@ -45,7 +40,7 @@ class NamedService
      */
     public function getClass()
     {
-        return $this->class;
+        return $this->param->getClass();
     }
 
     /**
