@@ -58,15 +58,15 @@ class DependencyResolver
     }
 
     /**
-     * Marks to use name-based binding.
+     * Registers the type to use name-based binding.
      *
      * @param string $typeName The fully qualified class name.
      * @return DependencyResolver
      */
-    public function markAsNamedType($typeName)
+    public function registerNamedType($typeName)
     {
         if (isset($this->namedTypes[$typeName])) {
-            throw new \InvalidArgumentException("`$typeName` is already marked as named type.");
+            throw new \InvalidArgumentException("`$typeName` is already registerd.");
         }
 
         $type = new \ReflectionClass($typeName);
@@ -76,15 +76,15 @@ class DependencyResolver
     }
 
     /**
-     * Marks to use name-based binding.
+     * Registers the value name to use name-based binding.
      *
      * @param string $valueName The name of constructor's parameter
      * @return DependencyResolver
      */
-    public function markAsNamedValue($valueName)
+    public function registerNamedValue($valueName)
     {
         if (isset($this->namedValues[$valueName])) {
-            throw new \InvalidArgumentException("`$valueName` is already marked as named value.");
+            throw new \InvalidArgumentException("`$valueName` is already registerd.");
         }
 
         $this->namedValues[$valueName] = true;

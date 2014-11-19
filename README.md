@@ -60,7 +60,7 @@ $dependencyGraph = (new DependencyResolver())
     ->registerType(IFoo::class, Foo::class)
     ->registerType(IBar::class, Bar::class)
     ->registerDynamicType(IQux::class)
-    ->markAsNamedType(IBaz::class)
+    ->registerNamedType(IBaz::class)
     ->execute([Bootstrapper::class]);
 ```
 
