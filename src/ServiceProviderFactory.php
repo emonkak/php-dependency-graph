@@ -8,9 +8,9 @@ namespace DependencyGraph;
 class ServiceProviderFactory
 {
     /**
-     * @var DependencyAnalyzer
+     * @var DependencyResolver
      */
-    private $dependencyAnalyzer;
+    private $dependencyResolver;
 
     /**
      * @var ServiceProviderGenerator
@@ -23,16 +23,16 @@ class ServiceProviderFactory
     private $serviceProviderLoader;
 
     /**
-     * @param DependencyAnalyzer $dependencyAnalyzer
+     * @param DependencyResolver $dependencyResolver
      * @param ServiceProviderGenerator $serviceProviderGenerator
      * @param ServiceProviderLoader $serviceProviderLoader
      */
     public function __construct(
-        DependencyAnalyzer $dependencyAnalyzer,
+        DependencyResolver $dependencyResolver,
         ServiceProviderGenerator $serviceProviderGenerator,
         ServiceProviderLoader $serviceProviderLoader)
     {
-        $this->dependencyAnalyzer = $dependencyAnalyzer;
+        $this->dependencyResolver = $dependencyResolver;
         $this->serviceProviderGenerator = $serviceProviderGenerator;
         $this->serviceProviderLoader = $serviceProviderLoader;
     }
@@ -48,7 +48,7 @@ class ServiceProviderFactory
     {
         if (!class_exists($serviceProviderClass, false)) {
             if (!$this->serviceProviderLoader->canLoad($serviceProviderClass)) {
-                $dependencyGraph = $this->dependencyAnalyzer->execute($serviceClasses);
+                $dependencyGraph = $this->dependencyResolver->execute($serviceClasses);
                 $source = $this->serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
                 $this->serviceProviderLoader->write($serviceProviderClass, $source);
             }

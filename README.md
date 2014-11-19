@@ -56,7 +56,7 @@ class Piyo {}
 class Payo {}
 class Poyo {}
 
-$dependencyGraph = (new DependencyAnalyzer())
+$dependencyGraph = (new DependencyResolver())
     ->registerType(IFoo::class, Foo::class)
     ->registerType(IBar::class, Bar::class)
     ->registerDynamicType(IQux::class)

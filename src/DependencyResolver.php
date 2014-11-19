@@ -2,7 +2,7 @@
 
 namespace DependencyGraph;
 
-class DependencyAnalyzer
+class DependencyResolver
 {
     /**
      * @var array of Service
@@ -24,7 +24,7 @@ class DependencyAnalyzer
      *
      * @param string $typeName The fully qualified class name.
      * @param string $className The fully qualified class name.
-     * @return DependencyAnalyzer
+     * @return DependencyResolver
      */
     public function registerType($typeName, $className)
     {
@@ -43,7 +43,7 @@ class DependencyAnalyzer
      * Registers the type to use dynamic binding.
      *
      * @param string $typeName The fully qualified class name.
-     * @return DependencyAnalyzer
+     * @return DependencyResolver
      */
     public function registerDynamicType($typeName)
     {
@@ -61,7 +61,7 @@ class DependencyAnalyzer
      * Marks to use name-based binding.
      *
      * @param string $typeName The fully qualified class name.
-     * @return DependencyAnalyzer
+     * @return DependencyResolver
      */
     public function markAsNamedType($typeName)
     {
@@ -79,7 +79,7 @@ class DependencyAnalyzer
      * Marks to use name-based binding.
      *
      * @param string $valueName The name of constructor's parameter
-     * @return DependencyAnalyzer
+     * @return DependencyResolver
      */
     public function markAsNamedValue($valueName)
     {

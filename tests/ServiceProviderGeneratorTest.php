@@ -2,7 +2,7 @@
 
 namespace DependencyGraphTests;
 
-use DependencyGraph\DependencyAnalyzer;
+use DependencyGraph\DependencyResolver;
 use DependencyGraph\ServiceProviderGenerator;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
@@ -13,7 +13,7 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
     {
         $serviceProviderGenerator = new ServiceProviderGenerator();
         $serviceProviderClass = 'MyServiceProvider';
-        $dependencyGraph = (new DependencyAnalyzer())
+        $dependencyGraph = (new DependencyResolver())
             ->registerType(IFoo::class, Foo::class)
             ->registerType(IBar::class, Bar::class)
             ->registerDynamicType(IQux::class)
