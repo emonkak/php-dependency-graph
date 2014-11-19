@@ -2,7 +2,7 @@
 
 namespace DependencyGraph;
 
-class DynamicService
+class DynamicService implements ServiceInterface
 {
     /**
      * @var \ReflectionClass $type
@@ -18,7 +18,7 @@ class DynamicService
     }
 
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function __toString()
     {
@@ -26,7 +26,7 @@ class DynamicService
     }
 
     /**
-     * @return \ReflectionClass
+     * {@inheritDoc}
      */
     public function getType()
     {
@@ -34,7 +34,7 @@ class DynamicService
     }
 
     /**
-     * @return \ReflectionClass
+     * {@inheritDoc}
      */
     public function getClass()
     {
@@ -42,7 +42,7 @@ class DynamicService
     }
 
     /**
-     * @return boolean
+     * {@inheritDoc}
      */
     public function isDynamic()
     {
