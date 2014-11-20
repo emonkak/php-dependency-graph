@@ -139,6 +139,10 @@ class DependencyResolver
                         if (isset($this->namedValues[$paramName])) {
                             $dependency = new NamedService($param);
                         } else {
+                            if ($param->isOptional()) {
+                                continue;
+                            }
+
                             throw new \UnexpectedValueException(
                                 "The `{$param->getName()}` dependent of `{$class->getName()}` can not be resolved."
                             );
