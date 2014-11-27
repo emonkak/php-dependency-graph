@@ -1,6 +1,6 @@
 <?php
 
-namespace DependencyGraphTests;
+namespace DependencyGraph\Tests;
 
 use DependencyGraph\DependencyResolver;
 use DependencyGraph\ServiceProviderGenerator;

@@ -1,6 +1,6 @@
 <?php
 
-namespace DependencyGraphTests;
+namespace DependencyGraph\Tests;
 
 use DependencyGraph\DynamicService;
 

@@ -10,7 +10,7 @@
     "autoload": {
         "psr-4": {
             "DependencyGraph\\": "src/",
-            "DependencyGraphTests\\": "tests/"
+            "DependencyGraph\\Tests\\": "tests/"
         }
     },
     "require-dev": {
