@@ -34,6 +34,10 @@ class DependencyResolver
 
         $type = new \ReflectionClass($typeName);
         $class = new \ReflectionClass($className);
+        if (!$class->isSubclassOf($type)) {
+            throw new \InvalidArgumentException("`$className` is not sub-class of `$typeName`");
+        }
+
         $this->bindings[$typeName] = new Service($type, $class);
 
         return $this;

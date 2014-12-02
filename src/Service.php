@@ -22,6 +22,9 @@ class Service implements ServiceInterface
         if (!$class->isInstantiable()) {
             throw new \InvalidArgumentException("`{$class->getName()}` is not instantiable.");
         }
+        if (!($class->getName() === $type->getName() || $class->isSubclassOf($type))) {
+            throw new \InvalidArgumentException("`{$class->getName()}` is not sub-class of `{$type->getName()}`");
+        }
         $this->type = $type;
         $this->class = $class;
     }
