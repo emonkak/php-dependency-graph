@@ -11,6 +11,6 @@ class DependencyGraphIterator extends \ArrayIterator implements \RecursiveIterat
 
     public function hasChildren()
     {
-        return $this->current()->getDependencies() > 0;
+        return count($this->current()->getDependencies()) > 0;
     }
 }
