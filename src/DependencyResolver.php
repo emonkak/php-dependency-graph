@@ -100,7 +100,7 @@ class DependencyResolver
      * @param array $classNames The class names to resolve the dependent.
      * @return DependencyGraph
      */
-    public function execute(array $classNames)
+    public function resolve(array $classNames)
     {
         $dependencyGraph = new DependencyGraph(function($x) { return (string) $x; });
         $services = [];

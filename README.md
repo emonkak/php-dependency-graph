@@ -61,7 +61,7 @@ $dependencyGraph = (new DependencyResolver())
     ->registerType(IBar::class, Bar::class)
     ->registerDynamicType(IQux::class)
     ->registerNamedType(IBaz::class)
-    ->execute([Bootstrapper::class]);
+    ->resolve([Bootstrapper::class]);
 ```
 
 ## Generate the Pimple's service provider source

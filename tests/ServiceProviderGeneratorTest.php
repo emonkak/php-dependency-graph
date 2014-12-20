@@ -18,7 +18,7 @@ class ServiceProviderGeneratorTest extends \PHPUnit_Framework_TestCase
             ->registerType(IBar::class, Bar::class)
             ->registerDynamicType(IQux::class)
             ->registerNamedType(IBaz::class)
-            ->execute([Bootstrapper::class]);
+            ->resolve([Bootstrapper::class]);
 
         $source = $serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
         $this->assertInternalType('string', $source);

@@ -48,7 +48,7 @@ class ServiceProviderFactory
     {
         if (!class_exists($serviceProviderClass, false)) {
             if (!$this->serviceProviderLoader->canLoad($serviceProviderClass)) {
-                $dependencyGraph = $this->dependencyResolver->execute($serviceClasses);
+                $dependencyGraph = $this->dependencyResolver->resolve($serviceClasses);
                 $source = $this->serviceProviderGenerator->generate($serviceProviderClass, $dependencyGraph);
                 $this->serviceProviderLoader->write($serviceProviderClass, $source);
             }
